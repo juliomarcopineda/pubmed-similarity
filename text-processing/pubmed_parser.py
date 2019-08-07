@@ -3,6 +3,8 @@ import gzip
 import xml.etree.ElementTree as ET
 import pandas as pd
 import ftplib
+import sys
+from io import BytesIO
 
 medline_ftp_host = 'ftp.ncbi.nlm.nih.gov'
 baseline_directory = 'pubmed/baseline'
@@ -77,18 +79,17 @@ def main():
 
     ftp = setup_ftp()
     files = ftp.nlst()
-    for file in files:
-        if '.md5' not in file and 'README.txt' != file:
-
-
-    pubmed_dir = Path.home() / 'pubmed_baseline'
-    for gz_file in pubmed_dir.iterdir():
-        print('READING: ' + str(gz_file))
-        pubmed_gz = gzip.GzipFile(gz_file, mode='rb')
-        try :
-            gz_read_data = pubmed_gz.read()
-            xml_string = gz_read_data.decode('utf-8')
-            root = ET.fromstring(xml_string)
+    valid_files = [file for file in files if '.md5' not in file and 'README.txt' != file]
+    for file in valid_files:
+        print("READING: " + file)
+        bio = BytesIO()
+        ftp.retrbinary('RETR ' + file, bio.write)
+        bio.seek(0)
+        try:
+            xml_bytes = bio.read()
+            decompressed = gzip.decompress(xml_bytes)
+            xml = decompressed.decode('utf-8')
+            root = ET.fromstring(xml)
 
             for citation in root.findall('PubmedArticle/MedlineCitation'):
                 year_node = citation.find('DateCompleted/Year')
@@ -100,8 +101,32 @@ def main():
                             citation_data = get_citation_data(citation)
                             data.append(citation_data)
         except:
-            print("Corrupted file: " + str(gz_file))
-            corrupted_files.append(gz_file)
+            print("Corrupted file: " + file)
+            corrupted_files.append(file)
+
+    ftp.quit()
+
+    # pubmed_dir = Path.home() / 'pubmed_baseline'
+    # for gz_file in pubmed_dir.iterdir():
+    #     print('READING: ' + str(gz_file))
+    #     pubmed_gz = gzip.GzipFile(gz_file, mode='rb')
+    #     try:
+    #         gz_read_data = pubmed_gz.read()
+    #         xml_string = gz_read_data.decode('utf-8')
+    #         root = ET.fromstring(xml_string)
+    #
+    #         for citation in root.findall('PubmedArticle/MedlineCitation'):
+    #             year_node = citation.find('DateCompleted/Year')
+    #             if year_node is not None:
+    #                 year_string = year_node.text
+    #                 if year_string:
+    #                     year = int(year_string)
+    #                     if year == 2018:
+    #                         citation_data = get_citation_data(citation)
+    #                         data.append(citation_data)
+    #     except:
+    #         print("Corrupted file: " + str(gz_file))
+    #         corrupted_files.append(gz_file)
 
     print('Converting data to DataFrame...')
     df = pd.DataFrame(data)
