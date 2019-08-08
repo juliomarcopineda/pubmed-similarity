@@ -43,9 +43,9 @@ class MongoProvider:
     def _read_config_file(config_file):
         """Read config file and return dictionary of config parameters
 
-                :param config_file: MongoDB connection config file path
-                :return: dict of config parameters
-                """
+        :param config_file: MongoDB connection config file path
+        :return: dict of config parameters
+        """
 
         config = {}
         with open(config_file, mode='r') as fid:
@@ -59,9 +59,9 @@ class MongoProvider:
     def _setup_client(config):
         """Establish MongoClient using config parameters and return MongoDB client
 
-                :param dict config: MongoDB-related client parameters for establishing connection
-                :return: MongoClient based on config
-                """
+        :param dict config: MongoDB-related client parameters for establishing connection
+        :return: MongoClient based on config
+        """
 
         return MongoClient(config['mongo.host'],
                            username=config['mongo.user'],
