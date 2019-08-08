@@ -1,26 +1,24 @@
-import requests
-import xml.etree.ElementTree as ET
-import pandas as pd
-from pathlib import Path
 import time
+import xml.etree.ElementTree as ET
+from pathlib import Path
 
+import pandas as pd
+import requests
 
+# URLs for API calls to retrieve PubMed publication information
 esearch = 'https://eutils.ncbi.nlm.nih.gov/entrez/eutils/esearch.fcgi'
 efetch = 'https://eutils.ncbi.nlm.nih.gov/entrez/eutils/efetch.fcgi?'
 
 
-def get_pmids():
+def get_pmids(query):
+    """Obtain PMIDs from PubMed given the following query for the API
+
+    :param query: dict of parameters
+    :return: list of PMIDs
+    """
+
     print('Retrieving PMIDs...')
-    data = {
-        'db': 'pubmed',
-        'term': 'cancer',
-        'field': 'majr',
-        'mindate': '2018/01',
-        'maxdate': '2018/12',
-        'datetype': 'pdat',
-        'retmax': 100000
-    }
-    request = requests.post(esearch, data)
+    request = requests.post(esearch, query)
     xml = request.text
     root = ET.fromstring(xml)
     pmids = [id_node.text for id_node in root.findall('IdList/Id')]
@@ -31,6 +29,12 @@ def get_pmids():
 
 
 def get_pub_xml(pmids):
+    """Obtain XML data associated to the provided PMIDs
+
+    :param pmids: list of PMIDs
+    :return: str XML representation of publication data
+    """
+
     print('Fetching citation XML data...')
     data = {
         'db': 'pubmed',
@@ -42,6 +46,11 @@ def get_pub_xml(pmids):
 
 
 def get_citation_data(citation):
+    """Given the citation node from the XML, obtain the data associated to the citation
+
+    :param citation: XML node with citation data
+    :return: dict of citation data
+    """
     citation_data = {}
 
     pmid_node = citation.find('PMID')
@@ -95,9 +104,21 @@ def get_citation_data(citation):
 
 
 def main():
-    pmids = get_pmids()
+    # Setup query to get PubMed IDs
+    pmid_query = {
+        'db': 'pubmed',
+        'term': 'cancer',
+        'field': 'majr',
+        'mindate': '2018/01',
+        'maxdate': '2018/12',
+        'datetype': 'pdat',
+        'retmax': 100000
+    }
+    pmids = get_pmids(pmid_query)
 
     print('Parsing XML data...')
+
+    # Batch XML requests
     batch_size = 1000
     batches = [pmids[i: i + batch_size] for i in range(0, len(pmids), batch_size)]
 
@@ -110,15 +131,17 @@ def main():
         for citation in root.findall('PubmedArticle/MedlineCitation'):
             count += 1
             if count % 5000 == 0:
-                print('STATUS: ' + str(count))
+                print('STATUS:', count)
 
             citation_data = get_citation_data(citation)
             data.append(citation_data)
 
+        # Slow down API requests to not exceed limit
         time.sleep(5)
 
-    print('STATUS: ' + str(count))
+    print('STATUS:', count)
 
+    # Convert citation data to DataFrame for easy CSV conversion
     df = pd.DataFrame(data)
     output_path = Path.home() / '2018_cancer.csv'
 
