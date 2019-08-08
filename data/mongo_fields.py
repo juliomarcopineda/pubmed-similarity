@@ -25,3 +25,4 @@ class Publications(MongoField):
     TITLE = ('title', 'Article Title')
     AUTHORS = ('authors', 'Authors')
     ABSTRACT = ('abstract', 'Abstract Text')
+    CLEAN_TEXT = ('cleanText', 'Clean Text')
