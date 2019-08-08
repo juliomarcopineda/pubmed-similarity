@@ -98,7 +98,7 @@ def main():
     pmids = get_pmids()
 
     print('Parsing XML data...')
-    batch_size = 5000
+    batch_size = 1000
     batches = [pmids[i: i + batch_size] for i in range(0, len(pmids), batch_size)]
 
     count = 0
@@ -115,7 +115,7 @@ def main():
             citation_data = get_citation_data(citation)
             data.append(citation_data)
 
-        time.sleep(1)
+        time.sleep(5)
 
     print('STATUS: ' + str(count))
 
