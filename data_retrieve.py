@@ -1,3 +1,8 @@
+"""Retrieve publication data from PubMed using eUtils API. This script limits the data
+for publications published between 2018/01 and 2018/12 with MeSH major topic: 'cancer'.
+The result is stored to disk as a CSV file.
+"""
+
 import time
 import xml.etree.ElementTree as ET
 from pathlib import Path
