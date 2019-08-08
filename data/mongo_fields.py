@@ -6,7 +6,7 @@ class MongoField(Enum):
 
     def __init__(self, mongo, spreadsheet=''):
         """Constructor for the base class that sets the MongoDB field name and Spreadsheet
-                column names for each field
+        column names for each field
 
         :param str mongo: MongoDB field representation
         :param str spreadsheet: Column spreadsheet representation
@@ -21,6 +21,7 @@ class Publications(MongoField):
 
     PMID = ('_id', 'PMID')
     PUBLICATION_YEAR = ('publicationYear', 'Publication Year')
+    JOURNAL = ('journal', 'Journal')
     TITLE = ('title', 'Article Title')
     AUTHORS = ('authors', 'Authors')
     ABSTRACT = ('abstract', 'Abstract Text')
