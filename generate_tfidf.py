@@ -23,7 +23,7 @@ def main():
         if clean_text:
             doc_size += 1
 
-            tokens = tokenize_text(clean_text)
+            tokens = [token for token in tokenize_text(clean_text) if len(token) > 3]
             counter = Counter(tokens)
             total = sum(count for count in counter.values())
 
