@@ -26,3 +26,4 @@ class Publications(MongoField):
     AUTHORS = ('authors', 'Authors')
     ABSTRACT = ('abstract', 'Abstract Text')
     CLEAN_TEXT = ('cleanText', 'Clean Text')
+    TFIDF_VECTOR = 'tfidfVector'
