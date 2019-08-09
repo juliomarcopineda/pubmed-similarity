@@ -4,6 +4,7 @@ The result is stored to disk as a CSV file.
 """
 
 import time
+import sys
 import xml.etree.ElementTree as ET
 from pathlib import Path
 
@@ -11,7 +12,7 @@ import pandas as pd
 import requests
 
 # URLs for API calls to retrieve PubMed publication information
-esearch = 'https://eutils.ncbi.nlm.nih.gov/entrez/eutils/esearch.fcgi'
+esearch = 'https://eutils.ncbi.nlm.nih.gov/entrez/eutils/esearch.fcgi?'
 efetch = 'https://eutils.ncbi.nlm.nih.gov/entrez/eutils/efetch.fcgi?'
 
 
@@ -59,7 +60,7 @@ def get_citation_data(citation):
     citation_data = {}
 
     pmid_node = citation.find('PMID')
-    year_node = citation.find('DateCompleted/Year')
+    year_node = citation.find('Article/Journal/JournalIssue/PubDate/Year')
     journal_node = citation.find('Article/Journal/Title')
     title_node = citation.find('Article/ArticleTitle')
     abstract_text_node = citation.find('Article/Abstract/AbstractText')
@@ -109,49 +110,57 @@ def get_citation_data(citation):
 
 
 def main():
-    # Setup query to get PubMed IDs
-    pmid_query = {
-        'db': 'pubmed',
-        'term': 'cancer',
-        'field': 'majr',
-        'mindate': '2018/01',
-        'maxdate': '2018/12',
-        'datetype': 'pdat',
-        'retmax': 100000
-    }
-    pmids = get_pmids(pmid_query)
+    journals = ['Cell', 'Nature Medicine', 'Science']
+    for journal in journals:
+        print('Querying for', journal)
+        term_query = 'cancer[majr] AND ' + journal + '[ta]'
 
-    print('Parsing XML data...')
+        # Setup query to get PubMed IDs
+        pmid_query = {
+            'db': 'pubmed',
+            'term': term_query,
+            # 'mindate': '2018/01/01',
+            # 'maxdate': '2019/08/09',
+            # 'datetype': 'pdat',
+            'retmax': 100000
+        }
+        pmids = get_pmids(pmid_query)
 
-    # Batch XML requests
-    batch_size = 1000
-    batches = [pmids[i: i + batch_size] for i in range(0, len(pmids), batch_size)]
+        print('Parsing XML data...')
 
-    count = 0
-    data = []
-    for batch in batches:
-        xml_data = get_pub_xml(batch)
-        root = ET.fromstring(xml_data)
+        # Batch XML requests
+        batch_size = 1000
+        batches = [pmids[i: i + batch_size] for i in range(0, len(pmids), batch_size)]
 
-        for citation in root.findall('PubmedArticle/MedlineCitation'):
-            count += 1
-            if count % 5000 == 0:
-                print('STATUS:', count)
+        count = 0
+        data = []
+        for batch in batches:
+            xml_data = get_pub_xml(batch)
+            root = ET.fromstring(xml_data)
 
-            citation_data = get_citation_data(citation)
-            data.append(citation_data)
+            for citation in root.findall('PubmedArticle/MedlineCitation'):
+                count += 1
+                if count % 5000 == 0:
+                    print('STATUS:', count)
 
-        # Slow down API requests to not exceed limit
-        time.sleep(5)
+                citation_data = get_citation_data(citation)
+                data.append(citation_data)
 
-    print('STATUS:', count)
+            # Slow down API requests to not exceed limit
+            time.sleep(5)
 
-    # Convert citation data to DataFrame for easy CSV conversion
-    df = pd.DataFrame(data)
-    output_path = Path.home() / '2018_cancer.csv'
+        print('STATUS:', count)
 
-    print('Writing data to ' + str(output_path) + '...')
-    df.to_csv(output_path, index=False)
+        print('Remove data elements with no abstract')
+        data = [citation_data for citation_data in data if citation_data.get('abstract', '')]
+
+        # Convert citation data to DataFrame for easy CSV conversion
+        df = pd.DataFrame(data)
+        filename = journal + '_cancer_2018_present.csv'
+        output_path = Path.home() / filename
+
+        print('Writing data to ' + str(output_path) + '...')
+        df.to_csv(output_path, index=False)
 
     print('Done.')
 
