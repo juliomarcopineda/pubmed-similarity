@@ -27,7 +27,10 @@ def pipeline(text):
 
 
 def main():
-    docs = collection.find({}, {Publications.ABSTRACT.mongo: 1, Publications.TITLE.mongo: 1})
+    docs = collection.find({Publications.CLEAN_TEXT.mongo: {'$exists': 0}},
+                           {Publications.ABSTRACT.mongo: 1, Publications.TITLE.mongo: 1})
+    size = collection.estimated_document_count({Publications.CLEAN_TEXT.mongo: {'$exists': 0}})
+    print('Number of docs:', size)
     status = 0
     for doc in docs:
         status += 1
