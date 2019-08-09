@@ -1,4 +1,5 @@
 import math
+from pathlib import Path
 
 from data.mongo_fields import Publications
 from data.mongo_provider import MongoProvider
@@ -7,11 +8,20 @@ from text_processing.text_cleaner import tokenize_text
 from collections import Counter, OrderedDict
 
 
-collection = MongoProvider().get_publications_collection()
+collection = MongoProvider(Path.home() / '.dsca' / 'app.config').get_publications_collection()
+
+
+def normalize_vector(vector):
+    normalized_vector = OrderedDict()
+    norm_length = math.sqrt(sum(weight * weight for weight in vector.values()))
+    for token, weight in vector.items():
+        normalized_vector[token] = weight / norm_length
+
+    return normalized_vector
 
 
 def main():
-    docs = collection.find({}, {Publications.CLEAN_TEXT.mongo: 1})
+    docs = collection.find({Publications.CLEAN_TEXT.mongo: {'$exists': 1}}, {Publications.CLEAN_TEXT.mongo: 1})
 
     print('Determining document and term frequencies...')
     doc_term_freq = {}
@@ -33,6 +43,7 @@ def main():
                 doc_freq[token] = doc_freq.get(token, 0) + 1
 
             doc_term_freq[pmid] = term_freq
+    print('Total number of tokens:', len(doc_freq))
 
     print('Calculating Inverse Document Frequencies...')
     idf = {}
@@ -54,13 +65,14 @@ def main():
         if status % 100 == 0:
             print('STATUS:', status)
 
-        tfidf_vector = OrderedDict(sorted(tfidf_vector.items(), key=lambda kv: kv[1]))
+        tfidf_vector = OrderedDict(sorted(tfidf_vector.items(), key=lambda kv: kv[1], reverse=True))
+        normalized_tfidf_vector = normalize_vector(tfidf_vector)
         filter_doc = {
             Publications.PMID.mongo: pmid
         }
         update_doc = {
             '$set': {
-                Publications.TFIDF_VECTOR.mongo: tfidf_vector
+                Publications.TFIDF_VECTOR.mongo: normalized_tfidf_vector
             }
         }
         collection.update_one(filter=filter_doc, update=update_doc)
