@@ -1,8 +1,4 @@
-import sys
-import pickle
-from concurrent.futures.process import ProcessPoolExecutor
 from pathlib import Path
-from joblib import Parallel, delayed
 
 from data.mongo_fields import Publications
 from data.mongo_provider import MongoProvider
@@ -29,8 +25,10 @@ def pipeline(text):
 def main():
     docs = collection.find({Publications.CLEAN_TEXT.mongo: {'$exists': 0}},
                            {Publications.ABSTRACT.mongo: 1, Publications.TITLE.mongo: 1})
-    size = collection.estimated_document_count({Publications.CLEAN_TEXT.mongo: {'$exists': 0}})
+
+    size = collection.count_documents({Publications.CLEAN_TEXT.mongo: {'$exists': 0}})
     print('Number of docs:', size)
+
     status = 0
     for doc in docs:
         status += 1
