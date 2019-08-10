@@ -21,7 +21,9 @@ def normalize_vector(vector):
 
 
 def main():
-    docs = collection.find({}, {Publications.CLEAN_TEXT.mongo: 1})
+    docs = collection.find({'$or': [{Publications.PUBLICATION_YEAR.mongo: 2018},
+                                    {Publications.PUBLICATION_YEAR.mongo: 2019}]},
+                           {Publications.CLEAN_TEXT.mongo: 1})
 
     print('Determining document and term frequencies...')
     doc_term_freq = {}
