@@ -3,12 +3,11 @@ for publications published between 2018/01 and 2018/12 with MeSH major topic: 'c
 The result is stored to disk as a CSV file.
 """
 
+import csv
 import time
-import sys
 import xml.etree.ElementTree as ET
 from pathlib import Path
 
-import pandas as pd
 import requests
 
 # URLs for API calls to retrieve PubMed publication information
@@ -85,11 +84,11 @@ def get_citation_data(citation):
     if pmid_node is not None:
         pmid_text = pmid_node.text
         if pmid_text:
-            citation_data['pmid'] = int(pmid_text)
+            citation_data['pmid'] = pmid_text
     if year_node is not None:
         year_text = year_node.text
         if year_text:
-            citation_data['year'] = int(year_text)
+            citation_data['year'] = year_text
     if journal_node is not None:
         journal = journal_node.text
         if journal:
@@ -155,12 +154,20 @@ def main():
         data = [citation_data for citation_data in data if citation_data.get('abstract', '')]
 
         # Convert citation data to DataFrame for easy CSV conversion
-        df = pd.DataFrame(data)
         filename = journal + '_cancer_2018_present.csv'
         output_path = Path.home() / filename
 
         print('Writing data to ' + str(output_path) + '...')
-        df.to_csv(output_path, index=False)
+        with open(file=output_path, mode='w', newline='', encoding='utf8') as csvfile:
+            writer = csv.writer(csvfile, delimiter=',')
+            headers = ['pmid', 'year', 'journal', 'title', 'abstract']
+            writer.writerow(headers)
+
+            for citation_data in data:
+                record = [citation_data.get('pmid', ''), citation_data.get('year', ''),
+                          citation_data.get('journal', ''), citation_data.get('title', ''),
+                          citation_data.get('abstract', '')]
+                writer.writerow(record)
 
     print('Done.')
 
