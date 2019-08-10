@@ -27,3 +27,5 @@ class Publications(MongoField):
     ABSTRACT = ('abstract', 'Abstract Text')
     CLEAN_TEXT = ('cleanText', 'Clean Text')
     TFIDF_VECTOR = 'tfidfVector'
+    NEIGHBORS = 'neighbors'
+    SCORES = 'scores'
