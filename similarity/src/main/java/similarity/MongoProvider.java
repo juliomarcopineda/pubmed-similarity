@@ -20,7 +20,6 @@ public class MongoProvider {
 		private String user = "";
 		private String password = "";
 		private Integer waitTime;
-		private boolean tmp = false;
 		
 		private static MongoConfig _instance = new MongoConfig();
 		
@@ -105,8 +104,8 @@ public class MongoProvider {
 		}
 		MongoClientOptions options = builder.build();
 		
-		MONGO_CLIENT = new MongoClient(new ServerAddress(MongoConfig.getHost(), 27017), credential,
-						options);
+		
+		MONGO_CLIENT = new MongoClient(new ServerAddress(MongoConfig.getHost(), 27017));
 	}
 	private static String DB = MongoConfig.getDatabase();
 	
