@@ -25,7 +25,7 @@ def construct_mongo_doc(row):
         doc[Publications.PMID.mongo] = int(pmid)
 
     year = row['year']
-    if year is not None:
+    if year is not None and year:
         doc[Publications.PUBLICATION_YEAR.mongo] = int(year)
 
     journal = row['journal']
@@ -52,19 +52,25 @@ def main():
     print('Dropping publications collection...')
     collection.drop()
 
-    status = 0
-    data_path = Path.home() / '2018_cancer.csv'
-    with open(data_path, mode='r', encoding='utf-8') as csvfile:
-        reader = csv.DictReader(csvfile)
-        for row in reader:
-            status += 1
-            if status % 5000 == 0:
-                print('STATUS:', status)
+    journals = ['Cell', 'Nature Medicine', 'Science']
+    for journal in journals:
+        print('Reading', journal)
+        status = 0
+        filename = journal + '_cancer_2018_present.csv'
+        data_path = Path.home() / filename
+        with open(data_path, mode='r', encoding='utf-8') as csvfile:
+            reader = csv.DictReader(csvfile)
+            for row in reader:
+                status += 1
+                if status % 100 == 0:
+                    print('STATUS:', status)
 
-            doc = construct_mongo_doc(row)
-            collection.insert_one(doc)
+                doc = construct_mongo_doc(row)
+                year = doc.get(Publications.PUBLICATION_YEAR.mongo)
+                if year is not None and year >= 2010:
+                    collection.insert_one(doc)
 
-    print('STATUS:', status)
+        print('STATUS:', status)
     print('Done.')
 
 

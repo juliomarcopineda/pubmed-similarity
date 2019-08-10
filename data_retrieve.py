@@ -160,13 +160,13 @@ def main():
         print('Writing data to ' + str(output_path) + '...')
         with open(file=output_path, mode='w', newline='', encoding='utf8') as csvfile:
             writer = csv.writer(csvfile, delimiter=',')
-            headers = ['pmid', 'year', 'journal', 'title', 'abstract']
+            headers = ['pmid', 'year', 'journal', 'title', 'abstract', 'authors']
             writer.writerow(headers)
 
             for citation_data in data:
                 record = [citation_data.get('pmid', ''), citation_data.get('year', ''),
                           citation_data.get('journal', ''), citation_data.get('title', ''),
-                          citation_data.get('abstract', '')]
+                          citation_data.get('abstract', ''), citation_data.get('authors', '')]
                 writer.writerow(record)
 
     print('Done.')

@@ -64,6 +64,6 @@ class MongoProvider:
         """
 
         return MongoClient(config['mongo.host'],
-                           username=config['mongo.user'],
-                           password=config['mongo.password'],
+                           # username=config['mongo.user'],
+                           # password=config['mongo.password'],
                            authSource=config['mongo.db'])
